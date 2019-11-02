@@ -87,7 +87,20 @@ int main(void)
 			s, sizeof s));
 	printf("listener: packet is %d bytes long\n", numbytes);
 	buf[numbytes] = '\0';
+
 	printf("listener: packet contains \"%s\"\n", buf);
+
+	//talk
+	char hello[10]="hello?";
+	if ((numbytes = sendto(sockfd, hello, strlen(hello), 0,
+			 p->ai_addr, p->ai_addrlen)) == -1) {
+		perror("talker: sendto");
+		exit(1);
+	}
+
+	freeaddrinfo(servinfo);
+
+	printf("talker: sent %d bytes to %lu\n", numbytes, strlen(hello));
 
 	close(sockfd);
 

@@ -14,6 +14,16 @@
 #include <netdb.h>
 
 #define SERVERPORT "4950"	// the port users will be connecting to
+#define MAXBUFLEN 100
+
+void *get_in_addr(struct sockaddr *sa)
+{
+	if (sa->sa_family == AF_INET) {
+		return &(((struct sockaddr_in*)sa)->sin_addr);
+	}
+
+	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
 
 int main(int argc, char *argv[])
 {
@@ -21,6 +31,10 @@ int main(int argc, char *argv[])
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
 	int numbytes;
+	socklen_t addr_len;
+	struct sockaddr_storage their_addr;
+	char buf[MAXBUFLEN];
+	char s[INET6_ADDRSTRLEN];
 
 	if (argc != 3) {
 		fprintf(stderr,"usage: talker hostname message\n");
@@ -61,7 +75,28 @@ int main(int argc, char *argv[])
 	freeaddrinfo(servinfo);
 
 	printf("talker: sent %d bytes to %s\n", numbytes, argv[1]);
+
+	//listen to receive
+	printf("listener: waiting to recvfrom...\n");
+
+	addr_len = sizeof their_addr;
+	if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
+		(struct sockaddr *)&their_addr, &addr_len)) == -1) {
+		perror("recvfrom");
+		exit(1);
+	}
+
+	printf("listener: got packet from %s\n",
+		inet_ntop(their_addr.ss_family,
+			get_in_addr((struct sockaddr *)&their_addr),
+			s, sizeof s));
+	printf("listener: packet is %d bytes long\n", numbytes);
+	buf[numbytes] = '\0';
+	printf("listener: packet contains \"%s\"\n", buf);
+
+	//close socket
 	close(sockfd);
+
 
 	return 0;
 }
