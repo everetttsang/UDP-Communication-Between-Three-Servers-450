@@ -96,6 +96,9 @@ int main(int argc, char *argv[])
 	char capacity[10];
 	char linkLength[10];
 	char propVel[10];
+	char propDelay[10];
+	char transDelay[10];
+	char totDelay[10];
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
 	hints.ai_socktype = SOCK_DGRAM;
@@ -133,6 +136,7 @@ int main(int argc, char *argv[])
 	//send data to dbServer
 	talk(argc, argv, argv[1], DBPORT);
 	int storeCount=0;
+	int receiveCount=0;
 	int dataToSend=0;
 //active waiting
 	while(1){
@@ -176,6 +180,32 @@ int main(int argc, char *argv[])
 					break;
 			}
 		}
+		if(receiveCount >0){
+			printf("Receive count %d\n", storeCount);
+			switch(receiveCount){
+				case 3:
+					strcpy(propDelay, buf);
+					printf("PROPAGATION DELAY %s\n",propDelay);
+					receiveCount--;
+					break;
+				case 2:
+					strcpy(transDelay, buf);
+					printf("TRANSMISSION DELAY %s\n", transDelay);
+					receiveCount--;
+					break;
+				case 1:
+					strcpy(totDelay, buf);
+					printf("TOTAL DELAY %s\n", totDelay);
+					receiveCount--;
+
+					break;
+				default:
+					break;
+			}
+			printf("Receive transmission delay %sms, propagation delay %sms, total delay %sms.\n", propDelay,transDelay,totDelay);
+		}
+
+
 
 
 		if (strcmp(buf, "a\0")==0){
@@ -184,10 +214,15 @@ int main(int argc, char *argv[])
 		}
 		if (dataToSend){
 			printf("CAPACITY %s LINKLENGTH %s PROPVEL %s", capacity, linkLength, propVel);
+			talk(argc, argv, argv[2], CALCPORT);
 			talk(argc, argv, capacity, CALCPORT);
 			talk(argc, argv, linkLength, CALCPORT);
 			talk(argc, argv, propVel, CALCPORT);
 			dataToSend=0;
+		}
+		if (strcmp(buf, "b\0")==0){
+			printf("I need to do something\n");
+			receiveCount=3;
 		}
 
 	//	printf("talker: sent %d bytes to %s\n", numbytes, buf);

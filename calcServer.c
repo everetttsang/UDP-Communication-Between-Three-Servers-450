@@ -132,6 +132,21 @@ int main(int argc,char *argv[])
 	}
 
 	freeaddrinfo(servinfo);
+	char capacity[10];
+	char linkLength[10];
+	char propVel[10];
+	char fileSize[10];
+	char propDelay[100];
+	char transDelay[100];
+	char totDelay[100];
+	int storing=0;
+	int storeCount=0;
+	int compute=0;
+	double propagationDelay;
+	double transmissionDelay;
+	double totalDelay;
+
+
 
 	while(1){
 		printf("listener: waiting to recvfrom...\n");
@@ -142,6 +157,12 @@ int main(int argc,char *argv[])
 			perror("recvfrom");
 			exit(1);
 		}
+		else{
+			if(storing==0){
+				storing=1;
+				storeCount=4;
+			}
+		}
 
 		printf("listener: got packet from %s\n",
 			inet_ntop(their_addr.ss_family,
@@ -151,17 +172,72 @@ int main(int argc,char *argv[])
 		buf[numbytes] = '\0';
 
 		printf("listener: packet contains \"%s\"\n", buf);
-		char id[10];
-		char* capacity;
-		char* linkLength;
-		char* propVel;
-		strcpy(id, buf);
-		printf("Copied: %s\n", id);
 
 
-		printf("talker: sent %d bytes to %s\n", numbytes, buf);
 
 
+
+
+
+		if(storeCount >0){
+			printf("Store count %d\n", storeCount);
+			switch(storeCount){
+				case 4:
+					strcpy(fileSize, buf);
+					printf("FILE SIZE %s\n", fileSize);
+					storeCount--;
+					break;
+				case 3:
+					strcpy(capacity, buf);
+					printf("CAPACITY %s\n",capacity);
+					storeCount--;
+					break;
+				case 2:
+					strcpy(linkLength, buf);
+					printf("LINKLENGTH %s\n", linkLength);
+					storeCount--;
+					break;
+				case 1:
+					strcpy(propVel, buf);
+					printf("PROPAGATIONVELOCITY %s\n", propVel);
+					storeCount--;
+				//	dataToSend=1;
+					storing=0;
+					compute =1;
+					break;
+				default:
+					break;
+			}
+		}
+
+
+	if(compute){
+
+		propagationDelay = (atof(linkLength))/(atof(propVel))*100000;
+		propagationDelay = (float)((int)(propagationDelay +0.05))/100;
+		transmissionDelay = (atof(fileSize)*8)/ atof(capacity)*100000;
+		transmissionDelay= (float)((int)(transmissionDelay +0.05))/100;
+		totalDelay= propagationDelay + transmissionDelay;
+
+
+		printf("pDelay %.2f tDelay %.2f totDelay %.2f\n", propagationDelay, transmissionDelay, totalDelay);
+
+		sprintf(propDelay, "%.2f", propagationDelay);
+		sprintf(transDelay, "%.2f", transmissionDelay);
+		sprintf(totDelay, "%.2f", totalDelay);
+
+	  printf("proDelay %s transDelay %s totDelay %s\n", propDelay, transDelay, totDelay);
+		talk(argc, argv, "b", SERVERPORT);
+		talk(argc,argv,propDelay, SERVERPORT);
+		talk(argc,argv,transDelay, SERVERPORT);
+		talk(argc,argv,totDelay, SERVERPORT);
+		printf("Send transmission delay %sms, propagation delay %sms, total delay %sms.\n", propDelay,transDelay,totDelay);
+
+
+
+	}
+		//propDelay = d/s; distance (m) / link speed (m/s)
+		//transDelay = L/R; Length of packet (bits) / Rate (Mbps)
 
 
 	}
