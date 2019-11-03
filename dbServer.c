@@ -16,6 +16,7 @@
 
 #define MYPORT "23236"	// the port users will be connecting to
 #define SERVERPORT "22236"
+#define CONTROL_SEND_CALC "a"
 
 
 #define MAXBUFLEN 100
@@ -150,11 +151,77 @@ int main(int argc,char *argv[])
 		buf[numbytes] = '\0';
 
 		printf("listener: packet contains \"%s\"\n", buf);
-
+		char id[10];
+		char* capacity;
+		char* linkLength;
+		char* propVel;
+		strcpy(id, buf);
+		printf("Copied: %s\n", id);
 
 
 		printf("talker: sent %d bytes to %s\n", numbytes, buf);
-		talk(argc, argv, "response", SERVERPORT);
+		//read file
+		/*
+		https://riptutorial.com/c/example/8274/get-lines-from-a-file-using-getline--
+		*/
+		char *line_buf = NULL;
+		size_t line_buf_size=0;
+		int line_count=0;
+		ssize_t line_size;
+
+		FILE *dbFile;
+		dbFile = fopen("database.txt", "r");
+		if(!dbFile){
+			return 1;
+		}
+		line_size= getline(&line_buf, &line_buf_size, dbFile);
+		/* Loop through until we are done with the file. */
+	int foundID=0;
+  while (line_size >= 0)
+  {
+    /* Increment our line count */
+    line_count++;
+
+    /* Show the line details */
+    //printf("contents: %s", line_buf);
+		char *token = strtok(line_buf, " ");
+		printf("ID %s TOKEN %s\n", id, token);
+		if (strcmp(id, token)==0){
+			printf("Obtained Line: %s\n", line_buf);
+			capacity= strtok(NULL, " ");
+			linkLength= strtok(NULL," ");
+			propVel= strtok(NULL," ");
+			printf("CAPACITY %s LINKLENGTH %s PROPVEL %s", capacity, linkLength, propVel);
+			talk(argc , argv, CONTROL_SEND_CALC, SERVERPORT);
+			//talk(argc, argv, id, SERVERPORT);
+			talk(argc, argv, capacity, SERVERPORT);
+			talk(argc, argv, linkLength, SERVERPORT);
+			talk(argc, argv, propVel, SERVERPORT);
+
+			line_size=-1;
+			foundID=1;
+		}
+
+    /* Get the next line */
+    line_size = getline(&line_buf, &line_buf_size, dbFile);
+  }
+	/* Free the allocated line buffer */
+	free(line_buf);
+	line_buf = NULL;
+
+	/* Close the file now that we are done with it */
+	fclose(dbFile);
+
+	if(foundID){
+
+	}
+	else{
+		talk(argc, argv, "No match found.\n",SERVERPORT);
+	}
+
+
+
+
 	}
 	close(sockfd);
 	return 0;

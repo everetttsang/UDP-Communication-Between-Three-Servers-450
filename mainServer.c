@@ -83,10 +83,6 @@ int talk(int argc, char* argv[], char msg[], char port[]){
 	return 0;
 }
 
-int listening() {
-
-return 0;
-}
 
 int main(int argc, char *argv[])
 {
@@ -101,6 +97,9 @@ int main(int argc, char *argv[])
 	socklen_t addr_len;
 	char s[INET6_ADDRSTRLEN];
 
+	char* capacity;
+	char* linkLength;
+	char* propVel;
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
 	hints.ai_socktype = SOCK_DGRAM;
@@ -137,7 +136,7 @@ int main(int argc, char *argv[])
 
 	//send data to dbServer
 	talk(argc, argv, NULL, DBPORT);
-
+	int storeCount=0;
 //active waiting
 	while(1){
 		printf("listener: waiting to recvfrom...\n");
@@ -157,10 +156,40 @@ int main(int argc, char *argv[])
 		buf[numbytes] = '\0';
 
 		printf("listener: packet contains \"%s\"\n", buf);
+		if(storeCount >0){
+			printf("Store count *d\n", storeCount);
+			switch(storeCount){
+				case 3:
+					strcpy(capacity, buf);
+					printf("CAPACITY %s\n",capacity);
+					storeCount--;
+					break;
+				case 2:
+					strcpy(linkLength, buf);
+					printf("LINKLENGTH %s\n", linkLength);
+					storeCount--;
+					break;
+				case 1:
+					strcpy(propVel, buf);
+					printf("PROPAGATIONVELOCITY %s\n", propVel);
+					storeCount--;
+					break;
+				default:
+					break;
+			}
+		}
+
+
+		if (strcmp(buf, "a\0")==0){
+			printf("I need to do something\n");
+			storeCount=3;
+		}
+
+
+	//	printf("talker: sent %d bytes to %s\n", numbytes, buf);
 
 
 
-		printf("talker: sent %d bytes to %s\n", numbytes, buf);
 
 	}
 	close(sockfd);
