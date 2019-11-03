@@ -15,6 +15,7 @@
 
 #define MYPORT "22236"
 #define DBPORT "23236"	// the port users will be connecting to
+#define CALCPORT "24236"
 #define MAXBUFLEN 100
 
 void *get_in_addr(struct sockaddr *sa)
@@ -35,11 +36,6 @@ int talk(int argc, char* argv[], char msg[], char port[]){
 	struct sockaddr_storage their_addr;
 	char buf[MAXBUFLEN];
 	char s[INET6_ADDRSTRLEN];
-
-	// if (argc != 3) {
-	// 	fprintf(stderr,"usage: talker hostname message\n");
-	// 	exit(1);
-	// }
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -66,7 +62,7 @@ int talk(int argc, char* argv[], char msg[], char port[]){
 		return 2;
 	}
 
-	if ((numbytes = sendto(sockfd, argv[1], strlen(argv[1]), 0,
+	if ((numbytes = sendto(sockfd, msg, strlen(msg), 0,
 			 p->ai_addr, p->ai_addrlen)) == -1) {
 		perror("talker: sendto");
 		exit(1);
@@ -74,7 +70,7 @@ int talk(int argc, char* argv[], char msg[], char port[]){
 
 	freeaddrinfo(servinfo);
 
-	printf("talker: sent %d bytes to %s\n", numbytes, argv[1]);
+	printf("talker: sent %d bytes to %s\n", numbytes, msg);
 
 
 
@@ -97,9 +93,9 @@ int main(int argc, char *argv[])
 	socklen_t addr_len;
 	char s[INET6_ADDRSTRLEN];
 
-	char* capacity;
-	char* linkLength;
-	char* propVel;
+	char capacity[10];
+	char linkLength[10];
+	char propVel[10];
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
 	hints.ai_socktype = SOCK_DGRAM;
@@ -135,8 +131,9 @@ int main(int argc, char *argv[])
 	freeaddrinfo(servinfo);
 
 	//send data to dbServer
-	talk(argc, argv, NULL, DBPORT);
+	talk(argc, argv, argv[1], DBPORT);
 	int storeCount=0;
+	int dataToSend=0;
 //active waiting
 	while(1){
 		printf("listener: waiting to recvfrom...\n");
@@ -157,7 +154,7 @@ int main(int argc, char *argv[])
 
 		printf("listener: packet contains \"%s\"\n", buf);
 		if(storeCount >0){
-			printf("Store count *d\n", storeCount);
+			printf("Store count %d\n", storeCount);
 			switch(storeCount){
 				case 3:
 					strcpy(capacity, buf);
@@ -173,6 +170,7 @@ int main(int argc, char *argv[])
 					strcpy(propVel, buf);
 					printf("PROPAGATIONVELOCITY %s\n", propVel);
 					storeCount--;
+					dataToSend=1;
 					break;
 				default:
 					break;
@@ -184,7 +182,13 @@ int main(int argc, char *argv[])
 			printf("I need to do something\n");
 			storeCount=3;
 		}
-
+		if (dataToSend){
+			printf("CAPACITY %s LINKLENGTH %s PROPVEL %s", capacity, linkLength, propVel);
+			talk(argc, argv, capacity, CALCPORT);
+			talk(argc, argv, linkLength, CALCPORT);
+			talk(argc, argv, propVel, CALCPORT);
+			dataToSend=0;
+		}
 
 	//	printf("talker: sent %d bytes to %s\n", numbytes, buf);
 
