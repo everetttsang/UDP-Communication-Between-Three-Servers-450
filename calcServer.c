@@ -232,7 +232,7 @@ printf("The calculation server is up and running.\n");
 		talk(argc,argv,propDelay, SERVERPORT);
 		talk(argc,argv,transDelay, SERVERPORT);
 		talk(argc,argv,totDelay, SERVERPORT);
-		printf("Send transmission delay %sms, propagation delay %sms, total delay %sms.\n", propDelay,transDelay,totDelay);
+		printf("Send transmission delay %sms, propagation delay %sms, total delay %sms.\n", transDelay,propDelay, totDelay);
 
 
 	compute=0;

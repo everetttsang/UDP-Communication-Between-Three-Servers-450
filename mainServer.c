@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
 				case 1:
 					strcpy(totDelay, buf);
 					//printf("TOTAL DELAY %s\n", totDelay);
-					printf("Receive transmission delay %sms, propagation delay %sms, total delay %sms.\n", propDelay,transDelay,totDelay);
+					printf("Receive transmission delay %sms, propagation delay %sms, total delay %sms.\n", transDelay, propDelay, totDelay);
 					receiveCount--;
 					stall=0;
 					break;
