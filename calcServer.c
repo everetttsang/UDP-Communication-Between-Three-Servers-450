@@ -79,7 +79,7 @@ int talk(int argc, char* argv[], char msg[], char port[]){
 
 	freeaddrinfo(servinfo);
 
-	printf("talker: sent %d bytes to %s\n", numbytes, msg);
+	//printf("talker: sent %d bytes to %s\n", numbytes, msg);
 
 
 
@@ -147,9 +147,9 @@ int main(int argc,char *argv[])
 	double totalDelay;
 
 
-
+printf("The calculation server is up and running.\n");
 	while(1){
-		printf("listener: waiting to recvfrom...\n");
+		//printf("listener: waiting to recvfrom...\n");
 
 		addr_len = sizeof their_addr;
 		if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
@@ -161,17 +161,18 @@ int main(int argc,char *argv[])
 			if(storing==0){
 				storing=1;
 				storeCount=4;
+				printf("Receive request from Main Server.\n");
 			}
 		}
 
-		printf("listener: got packet from %s\n",
+	//	printf("listener: got packet from %s\n",
 			inet_ntop(their_addr.ss_family,
 				get_in_addr((struct sockaddr *)&their_addr),
-				s, sizeof s));
-		printf("listener: packet is %d bytes long\n", numbytes);
+				s, sizeof s);
+	//	printf("listener: packet is %d bytes long\n", numbytes);
 		buf[numbytes] = '\0';
 
-		printf("listener: packet contains \"%s\"\n", buf);
+	//	printf("listener: packet contains \"%s\"\n", buf);
 
 
 
@@ -180,26 +181,26 @@ int main(int argc,char *argv[])
 
 
 		if(storeCount >0){
-			printf("Store count %d\n", storeCount);
+		//	printf("Store count %d\n", storeCount);
 			switch(storeCount){
 				case 4:
 					strcpy(fileSize, buf);
-					printf("FILE SIZE %s\n", fileSize);
+					//printf("FILE SIZE %s\n", fileSize);
 					storeCount--;
 					break;
 				case 3:
 					strcpy(capacity, buf);
-					printf("CAPACITY %s\n",capacity);
+				//	printf("CAPACITY %s\n",capacity);
 					storeCount--;
 					break;
 				case 2:
 					strcpy(linkLength, buf);
-					printf("LINKLENGTH %s\n", linkLength);
+				//	printf("LINKLENGTH %s\n", linkLength);
 					storeCount--;
 					break;
 				case 1:
 					strcpy(propVel, buf);
-					printf("PROPAGATIONVELOCITY %s\n", propVel);
+				//	printf("PROPAGATIONVELOCITY %s\n", propVel);
 					storeCount--;
 				//	dataToSend=1;
 					storing=0;
@@ -220,13 +221,13 @@ int main(int argc,char *argv[])
 		totalDelay= propagationDelay + transmissionDelay;
 
 
-		printf("pDelay %.2f tDelay %.2f totDelay %.2f\n", propagationDelay, transmissionDelay, totalDelay);
+	//	printf("pDelay %.2f tDelay %.2f totDelay %.2f\n", propagationDelay, transmissionDelay, totalDelay);
 
 		sprintf(propDelay, "%.2f", propagationDelay);
 		sprintf(transDelay, "%.2f", transmissionDelay);
 		sprintf(totDelay, "%.2f", totalDelay);
 
-	  printf("proDelay %s transDelay %s totDelay %s\n", propDelay, transDelay, totDelay);
+	  //printf("proDelay %s transDelay %s totDelay %s\n", propDelay, transDelay, totDelay);
 		talk(argc, argv, "b", SERVERPORT);
 		talk(argc,argv,propDelay, SERVERPORT);
 		talk(argc,argv,transDelay, SERVERPORT);
@@ -234,7 +235,7 @@ int main(int argc,char *argv[])
 		printf("Send transmission delay %sms, propagation delay %sms, total delay %sms.\n", propDelay,transDelay,totDelay);
 
 
-
+	compute=0;
 	}
 		//propDelay = d/s; distance (m) / link speed (m/s)
 		//transDelay = L/R; Length of packet (bits) / Rate (Mbps)

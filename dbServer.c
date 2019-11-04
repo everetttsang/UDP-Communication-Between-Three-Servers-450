@@ -79,7 +79,7 @@ int talk(int argc, char* argv[], char msg[], char port[]){
 
 	freeaddrinfo(servinfo);
 
-	printf("talker: sent %d bytes to %s\n", numbytes, msg);
+	//printf("talker: sent %d bytes to %s\n", numbytes, msg);
 
 
 
@@ -132,9 +132,10 @@ int main(int argc,char *argv[])
 	}
 
 	freeaddrinfo(servinfo);
+	printf("The database server is up and running.\n");
 
 	while(1){
-		printf("listener: waiting to recvfrom...\n");
+		//printf("listener: waiting to recvfrom...\n");
 
 		addr_len = sizeof their_addr;
 		if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
@@ -142,24 +143,27 @@ int main(int argc,char *argv[])
 			perror("recvfrom");
 			exit(1);
 		}
+		else{
+			printf("Received request from Main Server.\n");
+		}
 
-		printf("listener: got packet from %s\n",
+	//	printf("listener: got packet from %s\n",
 			inet_ntop(their_addr.ss_family,
 				get_in_addr((struct sockaddr *)&their_addr),
-				s, sizeof s));
-		printf("listener: packet is %d bytes long\n", numbytes);
+				s, sizeof s);
+	//	printf("listener: packet is %d bytes long\n", numbytes);
 		buf[numbytes] = '\0';
 
-		printf("listener: packet contains \"%s\"\n", buf);
+	//	printf("listener: packet contains \"%s\"\n", buf);
 		char id[10];
 		char* capacity;
 		char* linkLength;
 		char* propVel;
 		strcpy(id, buf);
-		printf("Copied: %s\n", id);
+	//	printf("Copied: %s\n", id);
 
 
-		printf("talker: sent %d bytes to %s\n", numbytes, buf);
+		//printf("talker: sent %d bytes to %s\n", numbytes, buf);
 		//read file
 		/*
 		https://riptutorial.com/c/example/8274/get-lines-from-a-file-using-getline--
@@ -185,18 +189,19 @@ int main(int argc,char *argv[])
     /* Show the line details */
     //printf("contents: %s", line_buf);
 		char *token = strtok(line_buf, " ");
-		printf("ID %s TOKEN %s\n", id, token);
+	//	printf("ID %s TOKEN %s\n", id, token);
 		if (strcmp(id, token)==0){
-			printf("Obtained Line: %s\n", line_buf);
+			//printf("Obtained Line: %s\n", line_buf);
 			capacity= strtok(NULL, " ");
 			linkLength= strtok(NULL," ");
 			propVel= strtok(NULL," ");
-			printf("CAPACITY %s LINKLENGTH %s PROPVEL %s", capacity, linkLength, propVel);
+			//printf("CAPACITY %s LINKLENGTH %s PROPVEL %s", capacity, linkLength, propVel);
 			talk(argc , argv, CONTROL_SEND_CALC, SERVERPORT);
 			//talk(argc, argv, id, SERVERPORT);
 			talk(argc, argv, capacity, SERVERPORT);
 			talk(argc, argv, linkLength, SERVERPORT);
 			talk(argc, argv, propVel, SERVERPORT);
+			printf("Send link %s, capacity %sMbps, link length %skm, propagation velocity %skm/s.\n", id, capacity,linkLength,propVel);
 
 			line_size=-1;
 			foundID=1;
@@ -216,7 +221,8 @@ int main(int argc,char *argv[])
 
 	}
 	else{
-		talk(argc, argv, "No match found.\n",SERVERPORT);
+		talk(argc, argv, "c\n",SERVERPORT);
+		printf("No match found.\n");
 	}
 
 

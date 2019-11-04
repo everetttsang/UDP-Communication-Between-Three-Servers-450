@@ -70,7 +70,7 @@ int talk(int argc, char* argv[], char msg[], char port[]){
 
 	freeaddrinfo(servinfo);
 
-	printf("talker: sent %d bytes to %s\n", numbytes, msg);
+	//printf("talker: sent %d bytes to %s\n", numbytes, msg);
 
 
 
@@ -99,6 +99,8 @@ int main(int argc, char *argv[])
 	char propDelay[10];
 	char transDelay[10];
 	char totDelay[10];
+	char inputID[100];
+	char inputFileSize[100];
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
 	hints.ai_socktype = SOCK_DGRAM;
@@ -132,15 +134,23 @@ int main(int argc, char *argv[])
 	}
 
 	freeaddrinfo(servinfo);
-
+	printf("The Server is up and running.\n");
+	printf("Please input link ID:\n");
+	scanf("%s %s", inputID, inputFileSize);
 	//send data to dbServer
-	talk(argc, argv, argv[1], DBPORT);
+	printf("Link %s, file size %sMB.\n", inputID, inputFileSize);
+	printf("Send Link %s to database server.\n", inputID);
+	talk(argc, argv, inputID, DBPORT);
+
 	int storeCount=0;
 	int receiveCount=0;
 	int dataToSend=0;
+	int stall =0;
+
+
 //active waiting
 	while(1){
-		printf("listener: waiting to recvfrom...\n");
+		// printf("listener: waiting to recvfrom...\n");
 
 		addr_len = sizeof their_addr;
 		if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
@@ -149,30 +159,36 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-		printf("listener: got packet from %s\n",
+	//	printf("listener: got packet from %s\n",
 			inet_ntop(their_addr.ss_family,
 				get_in_addr((struct sockaddr *)&their_addr),
-				s, sizeof s));
-		printf("listener: packet is %d bytes long\n", numbytes);
+				s, sizeof s);
+  	// printf("listener: packet is %d bytes long\n", numbytes);
 		buf[numbytes] = '\0';
 
-		printf("listener: packet contains \"%s\"\n", buf);
+
+		// printf("listener: packet contains \"%s\"\n", buf);
+		if (strcmp(buf, "c\n")==0){
+			printf("No match found\n");
+			stall =0;
+		}
 		if(storeCount >0){
-			printf("Store count %d\n", storeCount);
+			//printf("Store count %d\n", storeCount);
 			switch(storeCount){
 				case 3:
 					strcpy(capacity, buf);
-					printf("CAPACITY %s\n",capacity);
+					//printf("CAPACITY %s\n",capacity);
 					storeCount--;
 					break;
 				case 2:
 					strcpy(linkLength, buf);
-					printf("LINKLENGTH %s\n", linkLength);
+				//	printf("LINKLENGTH %s\n", linkLength);
 					storeCount--;
 					break;
 				case 1:
 					strcpy(propVel, buf);
-					printf("PROPAGATIONVELOCITY %s\n", propVel);
+					printf("Receive link capacity %sMpbs, link length %skm, and propagation velocity %skm/s.\n", capacity, linkLength,propVel);
+					//printf("PROPAGATIONVELOCITY %s\n", propVel);
 					storeCount--;
 					dataToSend=1;
 					break;
@@ -181,56 +197,68 @@ int main(int argc, char *argv[])
 			}
 		}
 		if(receiveCount >0){
-			printf("Receive count %d\n", storeCount);
+			//printf("Receive count %d\n", storeCount);
 			switch(receiveCount){
 				case 3:
 					strcpy(propDelay, buf);
-					printf("PROPAGATION DELAY %s\n",propDelay);
+					//printf("PROPAGATION DELAY %s\n",propDelay);
 					receiveCount--;
 					break;
 				case 2:
 					strcpy(transDelay, buf);
-					printf("TRANSMISSION DELAY %s\n", transDelay);
+				//	printf("TRANSMISSION DELAY %s\n", transDelay);
 					receiveCount--;
 					break;
 				case 1:
 					strcpy(totDelay, buf);
-					printf("TOTAL DELAY %s\n", totDelay);
+					//printf("TOTAL DELAY %s\n", totDelay);
+					printf("Receive transmission delay %sms, propagation delay %sms, total delay %sms.\n", propDelay,transDelay,totDelay);
 					receiveCount--;
-
+					stall=0;
 					break;
 				default:
 					break;
 			}
-			printf("Receive transmission delay %sms, propagation delay %sms, total delay %sms.\n", propDelay,transDelay,totDelay);
 		}
 
 
 
 
-		if (strcmp(buf, "a\0")==0){
-			printf("I need to do something\n");
-			storeCount=3;
-		}
-		if (dataToSend){
-			printf("CAPACITY %s LINKLENGTH %s PROPVEL %s", capacity, linkLength, propVel);
-			talk(argc, argv, argv[2], CALCPORT);
-			talk(argc, argv, capacity, CALCPORT);
-			talk(argc, argv, linkLength, CALCPORT);
-			talk(argc, argv, propVel, CALCPORT);
-			dataToSend=0;
-		}
-		if (strcmp(buf, "b\0")==0){
-			printf("I need to do something\n");
-			receiveCount=3;
-		}
+	if (strcmp(buf, "a\0")==0){
+		stall =1;
+		//printf("I need to do something\n");
+		storeCount=3;
+	}
+
+	if (strcmp(buf, "b\0")==0){
+		//printf("I need to do something\n");
+		receiveCount=3;
+	}
+	if (dataToSend){
+		//printf("CAPACITY %s LINKLENGTH %s PROPVEL %s", capacity, linkLength, propVel);
+		printf("Send information to calculation server.\n");
+		talk(argc, argv, inputFileSize, CALCPORT);
+		talk(argc, argv, capacity, CALCPORT);
+		talk(argc, argv, linkLength, CALCPORT);
+		talk(argc, argv, propVel, CALCPORT);
+		dataToSend=0;
+	}
+
 
 	//	printf("talker: sent %d bytes to %s\n", numbytes, buf);
 
 
-
-
+	if(stall==0){
+		printf("Please input link ID:\n");
+		scanf("%s %s", inputID, inputFileSize);
+		//send data to dbServer
+		printf("Link %s, file size %sMB.\n", inputID, inputFileSize);
+		printf("Send Link %s to database server.\n", inputID);
+		talk(argc, argv, inputID, DBPORT);
 	}
+}
+
 	close(sockfd);
 	return 0;
+
 }
