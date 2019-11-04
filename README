@@ -1,0 +1,15 @@
+This is the read me for Programming Term Project Part 2.
+
+Code used in dbserver.c was obtained from the website cited in the dbServer.c file.
+Such code was used to read from a file line-by-line. Code from Beej's tutorial
+was used as a framework for constructing this project. Otherwise, all other Code
+was modified and written by Everett Tsang.
+
+This code uses UDP to communicate freely between three different servers. When
+data is not being computed or sent, each server is actively listening to receive
+messages from other "client" servers.
+
+In order for the contained code to work correctly, dbServer and calcServer must
+be running before the input to mainServer is entered. This project also assumes
+that the data input from the database.txt file does not exceed 10 characters. An
+array of size 10 is used to contain all data obtained from the "database". 
